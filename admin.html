@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت عروسی</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 2rem auto;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .login-input {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .login-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .login-button:hover {
+            background: #2980b9;
+        }
+
+        .login-error {
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .nav-button {
+            background: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #2c3e50;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-button.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .nav-button i {
+            font-size: 1.2rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            color: #2c3e50;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .guests-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #fde8e8;
+            color: #e74c3c;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-badge.attending {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.not-attending {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge i {
+            margin-left: 0.5rem;
+        }
+
+        .status-badge.attending i {
+            color: #28a745;
+        }
+
+        .status-badge.not-attending i {
+            color: #dc3545;
+        }
+
+        .status-badge.pending i {
+            color: #ffc107;
+        }
+
+        .status-change-row {
+            background-color: #e3f2fd !important;
+        }
+
+        .recent-change {
+            background-color: #e3f2fd !important;
+            transition: background-color 0.5s ease;
+        }
+
+        .history-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        .history-btn:hover {
+            color: #2980b9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .visit-history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .visit-history-table th,
+        .visit-history-table td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        .visit-history-table th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .visit-history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            th, td {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div id="loginSection" class="login-container">
+        <h1>ورود به پنل مدیریت</h1>
+        <form class="login-form" onsubmit="return handleLogin(event)">
+            <input type="text" id="username" class="login-input" placeholder="نام کاربری" required>
+            <input type="password" id="password" class="login-input" placeholder="رمز عبور" required>
+            <button type="submit" class="login-button">ورود</button>
+        </form>
+        <div id="loginError" class="login-error">نام کاربری یا رمز عبور اشتباه است</div>
+    </div>
+
+    <div id="adminSection" class="container" style="display: none;">
+        <div class="header">
+            <h1>پنل مدیریت عروسی</h1>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-button active" onclick="showSection('attendance')">
+                <i class="fas fa-users"></i>
+                وضعیت حضور
+            </button>
+            <button class="nav-button" onclick="showSection('visits')">
+                <i class="fas fa-history"></i>
+                وضعیت بازدید
+            </button>
+            <button class="nav-button" onclick="showSection('users')" id="usersNavButton" style="display: none;">
+                <i class="fas fa-user-cog"></i>
+                مدیریت کاربران
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>تعداد خانواده ها</h3>
+                <div class="number" id="totalGuests">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>تعداد کل نفرات</h3>
+                <div class="number" id="totalPeople">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>تعداد خانواده تایید شده</h3>
+                <div class="number" id="totalAttending">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>تعداد کل بازدیدها</h3>
+                <div class="number" id="totalVisits">-</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="refresh-btn" onclick="loadData()">
+                <i class="fas fa-sync-alt"></i>
+                بارگذاری مجدد
+            </button>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <!-- بخش وضعیت حضور -->
+        <div id="attendance-section" class="content-section active">
+            <div class="guests-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>شناسه</th>
+                            <th>کد</th>
+                            <th>نام</th>
+                            <th>تعداد نفرات</th>
+                            <th>شماره تماس</th>
+                            <th>وضعیت حضور</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guestsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">در حال بارگذاری...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- بخش وضعیت بازدید -->
+        <div id="visits-section" class="content-section">
+            <div class="guests-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>کد</th>
+                            <th>نام</th>
+                            <th>آخرین بازدید</th>
+                            <th>نوع بازدید</th>
+                            <th>تعداد بازدید</th>
+                        </tr>
+                    </thead>
+                    <tbody id="visitsTableBody">
+                        <tr>
+                            <td colspan="5" class="loading">در حال بارگذاری...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- بخش مدیریت کاربران -->
+        <div id="users-section" class="content-section">
+            <div class="actions">
+                <button class="refresh-btn" onclick="showAddUserModal()" id="addUserButton" style="display: none;">
+                    <i class="fas fa-user-plus"></i>
+                    افزودن کاربر جدید
+                </button>
+            </div>
+            <div class="guests-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>شناسه</th>
+                            <th>نام کاربری</th>
+                            <th>نام کامل</th>
+                            <th>سطح دسترسی</th>
+                            <th>تاریخ ایجاد</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">در حال بارگذاری...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- مودال تاریخچه بازدید -->
+        <div id="visitHistoryModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" onclick="closeVisitHistoryModal()">&times;</span>
+                <h2 class="modal-title">تاریخچه بازدیدها</h2>
+                <div class="guests-table">
+                    <table class="visit-history-table">
+                        <thead>
+                            <tr>
+                                <th>تاریخ و زمان</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visitHistoryTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- مودال افزودن کاربر -->
+        <div id="addUserModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" onclick="closeAddUserModal()">&times;</span>
+                <h2 class="modal-title">افزودن کاربر جدید</h2>
+                <form id="addUserForm" onsubmit="return handleAddUser(event)">
+                    <div class="form-group">
+                        <input type="text" id="newUsername" class="login-input" placeholder="نام کاربری" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="newPassword" class="login-input" placeholder="رمز عبور" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="newFullName" class="login-input" placeholder="نام کامل" required>
+                    </div>
+                    <div class="form-group">
+                        <select id="newPermissionLevel" class="login-input" required>
+                            <option value="limited">دسترسی محدود</option>
+                            <option value="admin">دسترسی کامل</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="login-button">افزودن کاربر</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+            
+            // چک کردن کاربر در دیتابیس
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('adminSection').style.display = 'block';
+                    loginError.style.display = 'none';
+                    
+                    // نمایش/مخفی کردن بخش مدیریت کاربران بر اساس دسترسی
+                    if (currentUser.permission_level === 'admin') {
+                        document.getElementById('usersNavButton').style.display = 'flex';
+                        document.getElementById('addUserButton').style.display = 'block';
+                    }
+                    
+                    // شروع بارگذاری اطلاعات
+                    loadData();
+                } else {
+                    loginError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loginError.style.display = 'block';
+            });
+            
+            return false;
+        }
+
+        async function loadData() {
+            const tableBody = document.getElementById('guestsTableBody');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                tableBody.innerHTML = '<tr><td colspan="6" class="loading">در حال بارگذاری...</td></tr>';
+                errorDiv.style.display = 'none';
+
+                const [statsResponse, guestsResponse] = await Promise.all([
+                    fetch('/api/statistics'),
+                    fetch('/api/attendance')
+                ]);
+
+                if (!statsResponse.ok || !guestsResponse.ok) {
+                    throw new Error('خطا در دریافت اطلاعات');
+                }
+
+                const stats = await statsResponse.json();
+                const guests = await guestsResponse.json();
+
+                // نمایش آمار
+                document.getElementById('totalGuests').textContent = stats.totalGuests;
+                document.getElementById('totalPeople').textContent = stats.totalPeople;
+                document.getElementById('totalAttending').textContent = stats.totalAttending;
+                document.getElementById('totalVisits').textContent = stats.totalVisits || '0';
+
+                // نمایش جدول
+                if (guests.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="loading">هیچ مهمانی یافت نشد</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = guests.map(guest => `
+                    <tr>
+                        <td>${guest.id || '-'}</td>
+                        <td>${guest.code || '-'}</td>
+                        <td>${guest.name || '-'}</td>
+                        <td>${guest.num || '0'}</td>
+                        <td>${guest.tell || '-'}</td>
+                        <td>${getStatusBadge(guest.attendance_status)}</td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                errorDiv.textContent = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+                errorDiv.style.display = 'block';
+                tableBody.innerHTML = '';
+            }
+        }
+
+        async function loadVisitsData() {
+            const tableBody = document.getElementById('visitsTableBody');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                tableBody.innerHTML = '<tr><td colspan="5" class="loading">در حال بارگذاری...</td></tr>';
+                errorDiv.style.display = 'none';
+
+                const [visitsResponse, statsResponse] = await Promise.all([
+                    fetch('/api/visits'),
+                    fetch('/api/statistics')
+                ]);
+
+                if (!visitsResponse.ok || !statsResponse.ok) {
+                    throw new Error('خطا در دریافت اطلاعات');
+                }
+
+                const visits = await visitsResponse.json();
+                const stats = await statsResponse.json();
+
+                // نمایش آمار
+                document.getElementById('totalVisits').textContent = stats.totalVisits || '0';
+
+                // نمایش جدول
+                if (visits.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="loading">هیچ بازدیدی ثبت نشده است</td></tr>';
+                    return;
+                }
+
+                // گروه‌بندی بازدیدها بر اساس کد مهمان
+                const groupedVisits = {};
+                visits.forEach(visit => {
+                    if (!groupedVisits[visit.code]) {
+                        groupedVisits[visit.code] = {
+                            code: visit.code,
+                            name: visit.name,
+                            visits: []
+                        };
+                    }
+                    groupedVisits[visit.code].visits.push(new Date(visit.visit_time));
+                });
+
+                // تبدیل به آرایه و مرتب‌سازی بر اساس آخرین بازدید
+                const sortedVisits = Object.values(groupedVisits).sort((a, b) => {
+                    const lastVisitA = Math.max(...a.visits.map(d => d.getTime()));
+                    const lastVisitB = Math.max(...b.visits.map(d => d.getTime()));
+                    return lastVisitB - lastVisitA;
+                });
+
+                tableBody.innerHTML = sortedVisits.map(visit => {
+                    const lastVisit = new Date(Math.max(...visit.visits.map(d => d.getTime())));
+                    const visitCount = visit.visits.length;
+                    const historyButton = visitCount > 1 ? 
+                        `<button class="history-btn" onclick="showVisitHistory('${visit.code}', '${visit.name}')">
+                            <i class="fas fa-history"></i>
+                        </button>` : '';
+                    return `
+                        <tr>
+                            <td>${visit.code || '-'}</td>
+                            <td>${visit.name || '-'}</td>
+                            <td>${lastVisit.toLocaleString('fa-IR')}</td>
+                            <td>${visit.visit_type || 'بازدید'}</td>
+                            <td>${visitCount} ${historyButton}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading visits data:', error);
+                errorDiv.textContent = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+                errorDiv.style.display = 'block';
+                tableBody.innerHTML = '';
+            }
+        }
+
+        function showVisitHistory(code, name) {
+            const modal = document.getElementById('visitHistoryModal');
+            const tableBody = document.getElementById('visitHistoryTableBody');
+            const modalTitle = modal.querySelector('.modal-title');
+            
+            modalTitle.textContent = `تاریخچه بازدیدهای ${name} (${code})`;
+            
+            // دریافت اطلاعات بازدیدها
+            fetch('/api/visits')
+                .then(response => response.json())
+                .then(visits => {
+                    // فیلتر کردن بازدیدهای مربوط به این کد
+                    const userVisits = visits
+                        .filter(visit => visit.code === code)
+                        .map(visit => new Date(visit.visit_time))
+                        .sort((a, b) => b - a); // مرتب‌سازی نزولی
+
+                    // نمایش در جدول
+                    tableBody.innerHTML = userVisits.map(visit => `
+                        <tr>
+                            <td>${visit.toLocaleString('fa-IR')}</td>
+                        </tr>
+                    `).join('');
+
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading visit history:', error);
+                    alert('خطا در دریافت تاریخچه بازدیدها');
+                });
+        }
+
+        function closeVisitHistoryModal() {
+            const modal = document.getElementById('visitHistoryModal');
+            modal.style.display = 'none';
+        }
+
+        // بستن مودال با کلیک خارج از آن
+        window.onclick = function(event) {
+            const modal = document.getElementById('visitHistoryModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showSection(sectionId) {
+            // غیرفعال کردن همه بخش‌ها
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // غیرفعال کردن همه دکمه‌ها
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // فعال کردن بخش انتخاب شده
+            document.getElementById(`${sectionId}-section`).classList.add('active');
+            
+            // فعال کردن دکمه انتخاب شده
+            event.currentTarget.classList.add('active');
+
+            // تغییر دکمه بارگذاری مجدد بر اساس بخش فعال
+            const refreshBtn = document.querySelector('.refresh-btn');
+            if (sectionId === 'visits') {
+                refreshBtn.onclick = loadVisitsData;
+            } else if (sectionId === 'users') {
+                refreshBtn.onclick = loadUsersData;
+            } else {
+                refreshBtn.onclick = loadData;
+            }
+            
+            // بارگذاری داده‌های مربوط به بخش
+            if (sectionId === 'visits') {
+                loadVisitsData();
+            } else if (sectionId === 'users') {
+                loadUsersData();
+            } else {
+                loadData();
+            }
+        }
+
+        function getStatusBadge(status) {
+            let icon, className, text;
+            switch(status) {
+                case 'attending':
+                    icon = 'check-circle';
+                    className = 'attending';
+                    text = 'می‌آید';
+                    break;
+                case 'not_attending':
+                    icon = 'times-circle';
+                    className = 'not-attending';
+                    text = 'نمی‌آید';
+                    break;
+                default:
+                    icon = 'question-circle';
+                    className = 'pending';
+                    text = 'نظر نداده';
+            }
+            return `<span class="status-badge ${className}"><i class="fas fa-${icon}"></i> ${text}</span>`;
+        }
+
+        function loadUsersData() {
+            const tableBody = document.getElementById('usersTableBody');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                tableBody.innerHTML = '<tr><td colspan="6" class="loading">در حال بارگذاری...</td></tr>';
+                errorDiv.style.display = 'none';
+
+                fetch('/api/users')
+                .then(response => response.json())
+                .then(users => {
+                    if (users.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="6" class="loading">هیچ کاربری یافت نشد</td></tr>';
+                        return;
+                    }
+
+                    tableBody.innerHTML = users.map(user => `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.full_name}</td>
+                            <td>${user.permission_level === 'admin' ? 'دسترسی کامل' : 'دسترسی محدود'}</td>
+                            <td>${new Date(user.created_at).toLocaleString('fa-IR')}</td>
+                            <td>
+                                <button class="history-btn" onclick="deleteUser(${user.id})" ${user.id === currentUser.id ? 'disabled' : ''}>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    errorDiv.textContent = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+                    errorDiv.style.display = 'block';
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.style.display = 'block';
+        }
+
+        function closeAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.style.display = 'none';
+        }
+
+        function handleAddUser(event) {
+            event.preventDefault();
+            
+            const newUser = {
+                username: document.getElementById('newUsername').value,
+                password: document.getElementById('newPassword').value,
+                full_name: document.getElementById('newFullName').value,
+                permission_level: document.getElementById('newPermissionLevel').value
+            };
+
+            fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newUser)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeAddUserModal();
+                    loadUsersData();
+                    document.getElementById('addUserForm').reset();
+                } else {
+                    alert('خطا در افزودن کاربر: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('خطا در افزودن کاربر');
+            });
+
+            return false;
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('آیا از حذف این کاربر اطمینان دارید؟')) {
+                return;
+            }
+
+            fetch(`/api/users/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsersData();
+                } else {
+                    alert('خطا در حذف کاربر: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('خطا در حذف کاربر');
+            });
+        }
+
+        // بارگذاری اولیه اطلاعات
+        loadData();
+
+        // بارگذاری مجدد هر 30 ثانیه
+        setInterval(() => {
+            const activeSection = document.querySelector('.content-section.active');
+            if (activeSection.id === 'visits-section') {
+                loadVisitsData();
+            } else {
+                loadData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html> 

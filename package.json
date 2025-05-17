@@ -1,0 +1,14 @@
+{
+  "name": "wedding-website",
+  "version": "1.0.0",
+  "description": "Wedding website with clean URLs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "csv-parse": "^5.5.3",
+    "sqlite3": "^5.1.7"
+  }
+} 
