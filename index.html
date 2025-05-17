@@ -6,7 +6,16 @@
     <title>عروسی علی و مهلا</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/iran-nastaliq-font@v1.0.0/dist/font-face.css" rel="stylesheet" type="text/css" />
     <style>
+        @font-face {
+            font-family: 'IranNastaliq';
+            src: url('https://cdn.jsdelivr.net/gh/rastikerdar/iran-nastaliq-font@v1.0.0/dist/IranNastaliq.woff2') format('woff2'),
+                 url('https://cdn.jsdelivr.net/gh/rastikerdar/iran-nastaliq-font@v1.0.0/dist/IranNastaliq.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -57,7 +66,7 @@
         }
 
         .poem {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             color: #6c5ce7;
             margin-bottom: 2rem;
             line-height: 2;
@@ -66,6 +75,15 @@
             padding: 1rem;
             background: rgba(108, 92, 231, 0.05);
             border-radius: 15px;
+            font-family: 'IranNastaliq', serif !important;
+            text-align: center;
+        }
+
+        .poem p {
+            margin: 0.4rem 0;
+            font-size: 1.8rem;
+            line-height: 2;
+            font-family: 'IranNastaliq', serif !important;
         }
 
         .poem::before,
@@ -333,10 +351,8 @@
 
     <div class="container">
         <div class="poem">
-            "در آسمان عشق، ستاره‌ای درخشید<br>
-            دو قلب به هم پیوست و عشقی نو پدید<br>
-            علی و مهلا، دو روح در هم آمیخت<br>
-            تا ابد با هم، در سایه عشق زیست"
+            <p>در آسمان عشق، ستاره‌ای درخشید | دو قلب به هم پیوست و عشقی نو پدید</p>
+            <p>علی و مهلا، دو روح در هم آمیخت | تا ابد با هم، در سایه عشق زیست</p>
         </div>
 
         <div class="names">
