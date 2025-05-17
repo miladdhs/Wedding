@@ -5,18 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عروسی علی و مهلا</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Vazirmatn', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -24,104 +23,172 @@
             justify-content: center;
             text-align: center;
             padding: 2rem;
+            color: #2d3436;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .floating-hearts {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 1.5rem;
+            color: rgba(232, 67, 147, 0.3);
+            animation: float 6s ease-in-out infinite;
         }
 
         .container {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             padding: 3rem;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             max-width: 800px;
             width: 90%;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            border: 2px solid rgba(232, 67, 147, 0.1);
         }
 
-        h1 {
-            color: #2c3e50;
+        .poem {
+            font-size: 1.2rem;
+            color: #6c5ce7;
+            margin-bottom: 2rem;
+            line-height: 2;
+            font-style: italic;
+            position: relative;
+            padding: 1rem;
+            background: rgba(108, 92, 231, 0.05);
+            border-radius: 15px;
+        }
+
+        .poem::before,
+        .poem::after {
+            content: '"';
             font-size: 3rem;
-            margin-bottom: 1rem;
+            color: rgba(108, 92, 231, 0.2);
+            position: absolute;
+        }
+
+        .poem::before {
+            top: -1rem;
+            right: 1rem;
+        }
+
+        .poem::after {
+            bottom: -2rem;
+            left: 1rem;
+        }
+
+        .names {
+            font-size: 3.5rem;
+            color: #e84393;
+            margin: 1.5rem 0;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+            position: relative;
+            display: inline-block;
         }
 
-        .heart {
-            font-size: 3rem;
-            color: #e74c3c;
-            margin: 1rem 0;
+        .names::before,
+        .names::after {
+            content: '❤️';
+            position: absolute;
+            font-size: 2rem;
             animation: pulse 1.5s infinite;
         }
 
-        .message {
-            color: #34495e;
-            font-size: 1.2rem;
-            margin: 1rem 0;
+        .names::before {
+            right: -3rem;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
-        .error {
-            color: #e74c3c;
-            font-size: 1.2rem;
-            margin: 1rem 0;
+        .names::after {
+            left: -3rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .romantic-text {
+            font-size: 1.3rem;
+            color: #636e72;
+            margin: 1.5rem 0;
+            line-height: 1.8;
             padding: 1rem;
-            background: #fde8e8;
-            border-radius: 8px;
-            border: 1px solid #fbd5d5;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        .loading {
-            color: #7f8c8d;
-            font-size: 1.2rem;
-            margin: 1rem 0;
+        .event-details {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(232, 67, 147, 0.1);
         }
 
-        .decoration {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
+        .event-details h2 {
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            position: relative;
+            display: inline-block;
         }
 
-        .decoration::before,
-        .decoration::after {
+        .event-details h2::after {
             content: '';
             position: absolute;
-            width: 200px;
-            height: 200px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') no-repeat center center;
-            opacity: 0.1;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, #e84393, #6c5ce7);
+            border-radius: 3px;
         }
 
-        .decoration::before {
-            top: 10%;
-            left: 10%;
-        }
-
-        .decoration::after {
-            bottom: 10%;
-            right: 10%;
-        }
-
-        .guest-info {
-            margin-top: 2rem;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .guest-info h2 {
-            color: #2c3e50;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .guest-info p {
+        .detail-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin: 1rem 0;
-            font-size: 1.1rem;
-            color: #34495e;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            transition: transform 0.3s;
         }
 
-        .guest-info strong {
-            color: #2c3e50;
-            margin-left: 0.5rem;
+        .detail-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .detail-item i {
+            margin-left: 1rem;
+            color: #e84393;
+            font-size: 1.4rem;
+        }
+
+        .attendance-section {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(232, 67, 147, 0.1);
+        }
+
+        .attendance-section h3 {
+            color: #2d3436;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .attendance-buttons {
@@ -141,21 +208,39 @@
             align-items: center;
             gap: 0.5rem;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
         .attending-btn {
-            background: #28a745;
+            background: linear-gradient(45deg, #00b894, #00cec9);
             color: white;
         }
 
         .not-attending-btn {
-            background: #dc3545;
+            background: linear-gradient(45deg, #d63031, #e84393);
             color: white;
         }
 
         .attendance-buttons button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-buttons button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s;
+        }
+
+        .attendance-buttons button:hover::after {
+            transform: translateX(0);
         }
 
         .attendance-status {
@@ -171,20 +256,44 @@
             font-size: 1.1rem;
             font-weight: bold;
             margin-top: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .status-badge.attending {
-            background: #d4edda;
-            color: #155724;
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            color: white;
         }
 
         .status-badge.not-attending {
-            background: #f8d7da;
-            color: #721c24;
+            background: linear-gradient(45deg, #d63031, #e84393);
+            color: white;
         }
 
         .status-badge i {
             margin-left: 0.5rem;
+        }
+
+        .change-status-btn {
+            margin-top: 1rem;
+            background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .change-status-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0) rotate(0deg); }
         }
 
         @keyframes pulse {
@@ -195,32 +304,62 @@
     </style>
 </head>
 <body>
-    <div class="decoration"></div>
+    <div class="floating-hearts">
+        <div class="heart" style="top: 10%; left: 10%;">❤️</div>
+        <div class="heart" style="top: 20%; right: 20%;">❤️</div>
+        <div class="heart" style="bottom: 30%; left: 30%;">❤️</div>
+        <div class="heart" style="bottom: 40%; right: 40%;">❤️</div>
+        <div class="heart" style="top: 50%; left: 50%;">❤️</div>
+    </div>
+
     <div class="container">
-        <h1>عروسی علی و مهلا</h1>
-        <div class="heart">❤️</div>
-        <div id="welcomeMessage" class="message">
-            به وبسایت عروسی علی و مهلا خوش آمدید
+        <div class="poem">
+            "در آسمان عشق، ستاره‌ای درخشید<br>
+            دو قلب به هم پیوست و عشقی نو پدید<br>
+            علی و مهلا، دو روح در هم آمیخت<br>
+            تا ابد با هم، در سایه عشق زیست"
         </div>
-        <div id="guestInfo" class="guest-info" style="display: none;">
-            <h2>اطلاعات مهمان</h2>
-            <p><strong>نام:</strong> <span id="guestName"></span></p>
-            <p><strong>تعداد نفرات:</strong> <span id="guestNum"></span> نفر</p>
-            <p><strong>شماره تماس:</strong> <span id="guestTell"></span></p>
-            
-            <div class="attendance-buttons" id="attendanceButtons">
+
+        <div class="names">
+            علی و مهلا
+        </div>
+
+        <div class="romantic-text">
+            "در این سفر زیبای زندگی، خوشحالیم که شما را در کنار خود داریم.<br>
+            حضور شما، لحظات ما را شیرین‌تر می‌کند."
+        </div>
+
+        <div class="event-details">
+            <h2>اطلاعات مراسم</h2>
+            <div class="detail-item">
+                <i class="far fa-calendar-alt"></i>
+                <span>تاریخ: ۱۴۰۳/۰۳/۱۵</span>
+            </div>
+            <div class="detail-item">
+                <i class="far fa-clock"></i>
+                <span>ساعت: ۱۸:۰۰</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>مکان: تهران، خیابان ولیعصر، تالار باغ</span>
+            </div>
+        </div>
+
+        <div class="attendance-section">
+            <h3>آیا در مراسم ما حضور خواهید داشت؟</h3>
+            <div class="attendance-buttons">
                 <button onclick="updateAttendance('attending')" class="attending-btn">
-                    <i class="fas fa-check"></i> می‌آیم
+                    <i class="fas fa-check"></i> بله، با کمال میل می‌آیم
                 </button>
                 <button onclick="updateAttendance('not_attending')" class="not-attending-btn">
-                    <i class="fas fa-times"></i> نمی‌آیم
+                    <i class="fas fa-times"></i> متأسفانه نمی‌توانم بیایم
                 </button>
             </div>
             
             <div class="attendance-status" id="attendanceStatus" style="display: none;">
                 <p>وضعیت حضور شما:</p>
                 <div class="status-badge" id="statusBadge"></div>
-                <button onclick="showAttendanceButtons()" class="change-status-btn" style="margin-top: 1rem; background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
+                <button onclick="showAttendanceButtons()" class="change-status-btn">
                     <i class="fas fa-edit"></i> تغییر نظر
                 </button>
             </div>
@@ -228,105 +367,65 @@
     </div>
 
     <script>
-        async function checkGuest() {
-            const code = window.location.pathname.substring(1);
-            const welcomeMessage = document.getElementById('welcomeMessage');
-            const guestInfo = document.getElementById('guestInfo');
-            const attendanceButtons = document.getElementById('attendanceButtons');
-            const attendanceStatus = document.getElementById('attendanceStatus');
-
-            if (!code) {
-                welcomeMessage.style.display = 'block';
-                guestInfo.style.display = 'none';
-                return;
-            }
-
+        // Get guest code from URL
+        const guestCode = window.location.pathname.substring(1);
+        
+        // Check if guest code is valid and load guest info
+        async function checkGuestCode() {
             try {
-                // ثبت بازدید
-                await fetch(`/api/record-visit/${code}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const response = await fetch(`/api/guest/${code}`, {
-                    headers: {
-                        'Cache-Control': 'no-cache'
-                    }
-                });
+                const response = await fetch(`/api/guest/${guestCode}`);
                 const data = await response.json();
+                
+                if (data.error) {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                // Record visit if guest code is valid
+                recordVisit();
 
-                if (response.ok) {
-                    welcomeMessage.style.display = 'none';
-                    guestInfo.style.display = 'block';
-                    
-                    document.getElementById('guestName').textContent = data.name;
-                    document.getElementById('guestNum').textContent = data.num;
-                    document.getElementById('guestTell').textContent = data.tell;
-
-                    // نمایش وضعیت حضور
-                    if (data.attendance_status && data.attendance_status !== 'pending') {
-                        attendanceButtons.style.display = 'none';
-                        attendanceStatus.style.display = 'block';
-                        const statusBadge = document.getElementById('statusBadge');
-                        statusBadge.className = `status-badge ${data.attendance_status}`;
-                        statusBadge.innerHTML = `
-                            <i class="fas fa-${data.attendance_status === 'attending' ? 'check' : 'times'}"></i>
-                            ${data.attendance_status === 'attending' ? 'می‌آید' : 'نمی‌آید'}
-                        `;
-                    } else {
-                        attendanceButtons.style.display = 'flex';
-                        attendanceStatus.style.display = 'none';
-                    }
-                } else {
-                    welcomeMessage.style.display = 'none';
-                    guestInfo.style.display = 'block';
-                    guestInfo.innerHTML = `
-                        <div class="error">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <p>کد وارد شده معتبر نیست</p>
-                        </div>
-                    `;
+                // Show previous attendance status if exists
+                if (data.attendance_status && data.attendance_status !== 'pending') {
+                    showAttendanceStatus(data.attendance_status);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                welcomeMessage.style.display = 'none';
-                guestInfo.style.display = 'block';
-                guestInfo.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <p>خطا در دریافت اطلاعات</p>
-                    </div>
-                `;
+                console.error('Error checking guest code:', error);
+                window.location.href = '/';
             }
         }
 
-        async function showAttendanceButtons() {
-            const code = window.location.pathname.substring(1);
+        // Function to show attendance status
+        function showAttendanceStatus(status) {
+            document.querySelector('.attendance-buttons').style.display = 'none';
+            document.getElementById('attendanceStatus').style.display = 'block';
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.className = `status-badge ${status}`;
+            statusBadge.innerHTML = `
+                <i class="fas fa-${status === 'attending' ? 'check' : 'times'}"></i>
+                ${status === 'attending' ? 'می‌آید' : 'نمی‌آید'}
+            `;
+        }
+
+        // Check guest code when page loads
+        window.addEventListener('load', checkGuestCode);
+
+        // Record visit when page loads
+        async function recordVisit() {
             try {
-                const response = await fetch(`/api/change-opinion/${code}`, {
+                await fetch(`/api/record-visit?code=${guestCode}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
-
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('خطا در تغییر وضعیت');
-                }
             } catch (error) {
-                console.error('Error:', error);
-                alert('خطا در تغییر وضعیت');
+                console.error('Error recording visit:', error);
             }
         }
 
         async function updateAttendance(status) {
-            const code = window.location.pathname.substring(1);
             try {
-                const response = await fetch(`/api/attendance/${code}`, {
+                const response = await fetch(`/api/attendance/${guestCode}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -334,26 +433,42 @@
                     body: JSON.stringify({ status })
                 });
 
-                if (response.ok) {
-                    document.getElementById('attendanceButtons').style.display = 'none';
-                    document.getElementById('attendanceStatus').style.display = 'block';
-                    const statusBadge = document.getElementById('statusBadge');
-                    statusBadge.className = `status-badge ${status}`;
-                    statusBadge.innerHTML = `
-                        <i class="fas fa-${status === 'attending' ? 'check' : 'times'}"></i>
-                        ${status === 'attending' ? 'می‌آید' : 'نمی‌آید'}
-                    `;
+                const data = await response.json();
+
+                if (data.success) {
+                    showAttendanceStatus(status);
+                    alert('وضعیت حضور شما با موفقیت ثبت شد');
                 } else {
-                    alert('خطا در ثبت وضعیت حضور');
+                    alert('خطا در ثبت وضعیت حضور: ' + (data.error || 'خطای ناشناخته'));
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('خطا در ثبت وضعیت حضور');
+                alert('خطا در ثبت وضعیت حضور. لطفاً دوباره تلاش کنید.');
             }
         }
 
-        // Check guest when page loads
-        checkGuest();
+        async function showAttendanceButtons() {
+            try {
+                const response = await fetch(`/api/change-opinion/${guestCode}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.querySelector('.attendance-buttons').style.display = 'flex';
+                    document.getElementById('attendanceStatus').style.display = 'none';
+                } else {
+                    alert('خطا در تغییر وضعیت: ' + (data.error || 'خطای ناشناخته'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('خطا در تغییر وضعیت. لطفاً دوباره تلاش کنید.');
+            }
+        }
     </script>
 </body>
 </html> 

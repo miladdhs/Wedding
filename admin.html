@@ -411,7 +411,7 @@
                 <div class="number" id="totalPeople">-</div>
             </div>
             <div class="stat-card">
-                <h3>تعداد خانواده تایید شده</h3>
+                <h3>تعداد کل افراد تایید شده</h3>
                 <div class="number" id="totalAttending">-</div>
             </div>
             <div class="stat-card">
@@ -420,17 +420,20 @@
             </div>
         </div>
 
-        <div class="actions">
-            <button class="refresh-btn" onclick="loadData()">
-                <i class="fas fa-sync-alt"></i>
-                بارگذاری مجدد
-            </button>
-        </div>
-
         <div id="error" class="error" style="display: none;"></div>
 
         <!-- بخش وضعیت حضور -->
         <div id="attendance-section" class="content-section active">
+            <div class="actions">
+                <button class="refresh-btn" onclick="loadData()">
+                    <i class="fas fa-sync-alt"></i>
+                    بارگذاری مجدد
+                </button>
+                <button class="refresh-btn" id="importCsvBtn">
+                    <i class="fas fa-file-import"></i>
+                    وارد کردن CSV
+                </button>
+            </div>
             <div class="guests-table">
                 <table>
                     <thead>
@@ -454,6 +457,12 @@
 
         <!-- بخش وضعیت بازدید -->
         <div id="visits-section" class="content-section">
+            <div class="actions">
+                <button class="refresh-btn" onclick="loadVisitsData()">
+                    <i class="fas fa-sync-alt"></i>
+                    بارگذاری مجدد
+                </button>
+            </div>
             <div class="guests-table">
                 <table>
                     <thead>
@@ -477,6 +486,10 @@
         <!-- بخش مدیریت کاربران -->
         <div id="users-section" class="content-section">
             <div class="actions">
+                <button class="refresh-btn" onclick="loadUsersData()">
+                    <i class="fas fa-sync-alt"></i>
+                    بارگذاری مجدد
+                </button>
                 <button class="refresh-btn" onclick="showAddUserModal()" id="addUserButton" style="display: none;">
                     <i class="fas fa-user-plus"></i>
                     افزودن کاربر جدید
@@ -545,6 +558,19 @@
                     </div>
                     <button type="submit" class="login-button">افزودن کاربر</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- CSV Import Modal -->
+        <div id="csvImportModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>وارد کردن فایل CSV</h2>
+                <form id="csvImportForm">
+                    <input type="file" id="csvFile" accept=".csv" required>
+                    <button type="submit" class="submit-btn">وارد کردن</button>
+                </form>
+                <div id="importStatus" style="margin-top: 1rem;"></div>
             </div>
         </div>
     </div>
@@ -669,18 +695,18 @@
                 document.getElementById('totalVisits').textContent = stats.totalVisits || '0';
 
                 // نمایش جدول
-                if (visits.length === 0) {
+                if (!visits.success || !visits.visits || visits.visits.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="5" class="loading">هیچ بازدیدی ثبت نشده است</td></tr>';
                     return;
                 }
 
                 // گروه‌بندی بازدیدها بر اساس کد مهمان
                 const groupedVisits = {};
-                visits.forEach(visit => {
+                visits.visits.forEach(visit => {
                     if (!groupedVisits[visit.code]) {
                         groupedVisits[visit.code] = {
                             code: visit.code,
-                            name: visit.name,
+                            name: visit.guest_name,
                             visits: []
                         };
                     }
@@ -704,7 +730,7 @@
                     return `
                         <tr>
                             <td>${visit.code || '-'}</td>
-                            <td>${visit.name || '-'}</td>
+                            <td>${visit.name || 'نامشخص'}</td>
                             <td>${lastVisit.toLocaleString('fa-IR')}</td>
                             <td>${visit.visit_type || 'بازدید'}</td>
                             <td>${visitCount} ${historyButton}</td>
@@ -730,9 +756,12 @@
             // دریافت اطلاعات بازدیدها
             fetch('/api/visits')
                 .then(response => response.json())
-                .then(visits => {
+                .then(response => {
+                    if (!response.success || !response.visits) {
+                        throw new Error('خطا در دریافت اطلاعات');
+                    }
                     // فیلتر کردن بازدیدهای مربوط به این کد
-                    const userVisits = visits
+                    const userVisits = response.visits
                         .filter(visit => visit.code === code)
                         .map(visit => new Date(visit.visit_time))
                         .sort((a, b) => b - a); // مرتب‌سازی نزولی
@@ -945,6 +974,61 @@
                 loadData();
             }
         }, 30000);
+
+        // CSV Import functionality
+        document.getElementById('importCsvBtn').addEventListener('click', function() {
+            document.getElementById('csvImportModal').style.display = 'block';
+        });
+
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('csvImportModal').style.display = 'none';
+        });
+
+        document.getElementById('csvImportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            const statusDiv = document.getElementById('importStatus');
+            
+            if (!file) {
+                statusDiv.innerHTML = '<p style="color: red;">لطفا یک فایل CSV انتخاب کنید</p>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                statusDiv.innerHTML = '<p>در حال وارد کردن اطلاعات...</p>';
+                
+                const response = await fetch('/api/import-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.innerHTML = `<p style="color: green;">${result.message}</p>`;
+                    // Refresh the guests table
+                    loadData();
+                } else {
+                    statusDiv.innerHTML = `<p style="color: red;">${result.message}</p>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<p style="color: red;">خطا در وارد کردن فایل</p>';
+                console.error('Error:', error);
+            }
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('csvImportModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html> 

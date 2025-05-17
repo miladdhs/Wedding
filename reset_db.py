@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('database.db')
+conn = sqlite3.connect('wedding.db')
 cursor = conn.cursor()
 
 # وضعیت حضور همه مهمان‌ها را به NULL برگردان

@@ -1,58 +1,62 @@
 import sqlite3
+from datetime import datetime
 import hashlib
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def init_db():
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
+    conn = sqlite3.connect('wedding.db')
+    c = conn.cursor()
 
-    # ایجاد جدول کاربران
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        full_name TEXT NOT NULL,
-        permission_level TEXT CHECK(permission_level IN ('admin', 'limited')) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+    # جدول مهمان‌ها
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS guests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            num INTEGER NOT NULL,
+            tell TEXT,
+            attendance_status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     ''')
 
-    # ایجاد جدول مهمان‌ها
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS guests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        num INTEGER DEFAULT 1,
-        tell TEXT,
-        attendance_status TEXT CHECK(attendance_status IN ('attending', 'not_attending', 'pending')) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+    # جدول بازدیدها
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL,
+            visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            visit_type TEXT DEFAULT 'بازدید',
+            FOREIGN KEY (code) REFERENCES guests(code)
+        )
     ''')
 
-    # ایجاد جدول بازدیدها
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS visits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT NOT NULL,
-        visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        visit_type TEXT DEFAULT 'بازدید',
-        FOREIGN KEY (code) REFERENCES guests(code)
-    )
+    # جدول کاربران
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            full_name TEXT,
+            permission_level TEXT DEFAULT 'admin',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     ''')
 
-    # اضافه کردن کاربر پیش‌فرض
-    cursor.execute('''
-    INSERT OR IGNORE INTO users (username, password, full_name, permission_level)
-    VALUES (?, ?, ?, ?)
-    ''', ('Milad', hash_password('11051386'), 'Milad', 'admin'))
+    # کاربر پیش‌فرض ادمین
+    try:
+        c.execute('''
+            INSERT INTO users (username, password, full_name, permission_level)
+            VALUES (?, ?, ?, ?)
+        ''', ('admin', '21232f297a57a5a743894a0e4a801fc3', 'مدیر سیستم', 'admin'))
+    except sqlite3.IntegrityError:
+        pass
 
     conn.commit()
     conn.close()
-    print("دیتابیس با موفقیت ایجاد شد.")
+    print('دیتابیس wedding.db و جدول‌ها ساخته شدند.')
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_db() 
