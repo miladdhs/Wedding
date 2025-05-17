@@ -290,6 +290,24 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
         @keyframes float {
             0% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(10deg); }
@@ -304,6 +322,7 @@
     </style>
 </head>
 <body>
+    <div class="notification" id="notification"></div>
     <div class="floating-hearts">
         <div class="heart" style="top: 10%; left: 10%;">❤️</div>
         <div class="heart" style="top: 20%; right: 20%;">❤️</div>
@@ -437,14 +456,28 @@
 
                 if (data.success) {
                     showAttendanceStatus(status);
-                    alert('وضعیت حضور شما با موفقیت ثبت شد');
+                    showNotification('وضعیت حضور شما با موفقیت ثبت شد');
                 } else {
-                    alert('خطا در ثبت وضعیت حضور: ' + (data.error || 'خطای ناشناخته'));
+                    showNotification('خطا در ثبت وضعیت حضور: ' + (data.error || 'خطای ناشناخته'), true);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('خطا در ثبت وضعیت حضور. لطفاً دوباره تلاش کنید.');
+                showNotification('خطا در ثبت وضعیت حضور. لطفاً دوباره تلاش کنید.', true);
             }
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = isError ? 
+                'linear-gradient(45deg, #d63031, #e84393)' : 
+                'linear-gradient(45deg, #00b894, #00cec9)';
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
         async function showAttendanceButtons() {
@@ -462,11 +495,11 @@
                     document.querySelector('.attendance-buttons').style.display = 'flex';
                     document.getElementById('attendanceStatus').style.display = 'none';
                 } else {
-                    alert('خطا در تغییر وضعیت: ' + (data.error || 'خطای ناشناخته'));
+                    showNotification('خطا در تغییر وضعیت: ' + (data.error || 'خطای ناشناخته'), true);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('خطا در تغییر وضعیت. لطفاً دوباره تلاش کنید.');
+                showNotification('خطا در تغییر وضعیت. لطفاً دوباره تلاش کنید.', true);
             }
         }
     </script>
