@@ -682,6 +682,7 @@
                         <thead>
                             <tr>
                                 <th>تاریخ و زمان</th>
+                                <th>نوع بازدید</th>
                             </tr>
                         </thead>
                         <tbody id="visitHistoryTableBody">
@@ -831,6 +832,11 @@
         }
 
         async function loadData() {
+            if (!currentUser || !currentUser.id) {
+                console.error('User not authenticated');
+                return;
+            }
+
             const tableBody = document.getElementById('guestsTableBody');
             const errorDiv = document.getElementById('error');
 
@@ -839,8 +845,8 @@
                 errorDiv.style.display = 'none';
 
                 const [statsResponse, guestsResponse] = await Promise.all([
-                    fetch('/api/statistics'),
-                    fetch('/api/attendance')
+                    fetch('/api/statistics?user_id=' + currentUser.id),
+                    fetch('/api/attendance?user_id=' + currentUser.id)
                 ]);
 
                 if (!statsResponse.ok || !guestsResponse.ok) {
@@ -882,6 +888,11 @@
         }
 
         async function loadVisitsData() {
+            if (!currentUser || !currentUser.id) {
+                console.error('User not authenticated');
+                return;
+            }
+
             const tableBody = document.getElementById('visitsTableBody');
             const errorDiv = document.getElementById('error');
 
@@ -889,35 +900,28 @@
                 tableBody.innerHTML = '<tr><td colspan="5" class="loading">در حال بارگذاری...</td></tr>';
                 errorDiv.style.display = 'none';
 
-                const [visitsResponse, statsResponse] = await Promise.all([
-                    fetch('/api/visits'),
-                    fetch('/api/statistics')
-                ]);
-
-                if (!visitsResponse.ok || !statsResponse.ok) {
+                const response = await fetch('/api/visits?user_id=' + currentUser.id);
+                if (!response.ok) {
                     throw new Error('خطا در دریافت اطلاعات');
                 }
 
-                const visits = await visitsResponse.json();
-                const stats = await statsResponse.json();
-
-                // نمایش آمار
-                document.getElementById('totalVisits').textContent = stats.totalVisits || '0';
-
+                const data = await response.json();
+                
                 // نمایش جدول
-                if (!visits.success || !visits.visits || visits.visits.length === 0) {
+                if (!data.visits || data.visits.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="5" class="loading">هیچ بازدیدی ثبت نشده است</td></tr>';
                     return;
                 }
 
                 // گروه‌بندی بازدیدها بر اساس کد مهمان
                 const groupedVisits = {};
-                visits.visits.forEach(visit => {
+                data.visits.forEach(visit => {
                     if (!groupedVisits[visit.code]) {
                         groupedVisits[visit.code] = {
                             code: visit.code,
-                            name: visit.guest_name,
-                            visits: []
+                            name: visit.guest_name || 'نامشخص',
+                            visits: [],
+                            visit_type: visit.visit_type || 'بازدید'
                         };
                     }
                     groupedVisits[visit.code].visits.push(new Date(visit.visit_time));
@@ -937,12 +941,22 @@
                         `<button class="history-btn" onclick="showVisitHistory('${visit.code}', '${visit.name}')">
                             <i class="fas fa-history"></i>
                         </button>` : '';
+                    
+                    // Format date in Persian
+                    const formattedDate = new Intl.DateTimeFormat('fa-IR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).format(lastVisit);
+
                     return `
                         <tr>
                             <td>${visit.code || '-'}</td>
-                            <td>${visit.name || 'نامشخص'}</td>
-                            <td>${lastVisit.toLocaleString('fa-IR')}</td>
-                            <td>${visit.visit_type || 'بازدید'}</td>
+                            <td>${visit.name}</td>
+                            <td>${formattedDate}</td>
+                            <td>${visit.visit_type}</td>
                             <td>${visitCount} ${historyButton}</td>
                         </tr>
                     `;
@@ -964,24 +978,38 @@
             modalTitle.textContent = `تاریخچه بازدیدهای ${name} (${code})`;
             
             // دریافت اطلاعات بازدیدها
-            fetch('/api/visits')
+            fetch('/api/visits?user_id=' + currentUser.id)
                 .then(response => response.json())
                 .then(response => {
-                    if (!response.success || !response.visits) {
+                    if (!response.visits) {
                         throw new Error('خطا در دریافت اطلاعات');
                     }
                     // فیلتر کردن بازدیدهای مربوط به این کد
                     const userVisits = response.visits
                         .filter(visit => visit.code === code)
-                        .map(visit => new Date(visit.visit_time))
-                        .sort((a, b) => b - a); // مرتب‌سازی نزولی
+                        .map(visit => ({
+                            time: new Date(visit.visit_time),
+                            type: visit.visit_type || 'بازدید'
+                        }))
+                        .sort((a, b) => b.time - a.time); // مرتب‌سازی نزولی
 
                     // نمایش در جدول
-                    tableBody.innerHTML = userVisits.map(visit => `
-                        <tr>
-                            <td>${visit.toLocaleString('fa-IR')}</td>
-                        </tr>
-                    `).join('');
+                    tableBody.innerHTML = userVisits.map(visit => {
+                        const formattedDate = new Intl.DateTimeFormat('fa-IR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).format(visit.time);
+
+                        return `
+                            <tr>
+                                <td>${formattedDate}</td>
+                                <td>${visit.type}</td>
+                            </tr>
+                        `;
+                    }).join('');
 
                     modal.style.display = 'block';
                 })
@@ -1280,6 +1308,7 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('user_id', currentUser.id);
 
             try {
                 showStatus('در حال وارد کردن اطلاعات...', 'loading');
@@ -1312,6 +1341,42 @@
         function showStatus(message, type) {
             importStatus.innerHTML = message;
             importStatus.className = 'import-status ' + type;
+        }
+
+        // Add function to record visits
+        async function recordVisit(code) {
+            if (!currentUser || !currentUser.id) {
+                console.error('User not authenticated');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/record-visit?code=${code}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        visit_type: 'بازدید'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('خطا در ثبت بازدید');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh visits data
+                    loadVisitsData();
+                } else {
+                    throw new Error(data.message || 'خطا در ثبت بازدید');
+                }
+            } catch (error) {
+                console.error('Error recording visit:', error);
+                alert('خطا در ثبت بازدید');
+            }
         }
     </script>
 </body>

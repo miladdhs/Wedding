@@ -389,6 +389,8 @@
         // Get guest code from URL
         const guestCode = window.location.pathname.substring(1);
         
+        let guestUserId = null;
+
         // Check if guest code is valid and load guest info
         async function checkGuestCode() {
             try {
@@ -399,6 +401,8 @@
                     window.location.href = '/';
                     return;
                 }
+                
+                guestUserId = data.user_id;
                 
                 // Record visit if guest code is valid
                 recordVisit();
@@ -430,13 +434,28 @@
 
         // Record visit when page loads
         async function recordVisit() {
+            if (!guestUserId) return;
             try {
-                await fetch(`/api/record-visit?code=${guestCode}`, {
+                const response = await fetch('/api/record-visit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        code: guestCode,
+                        user_id: guestUserId,
+                        visit_type: 'بازدید'
+                    })
                 });
+
+                if (!response.ok) {
+                    throw new Error('خطا در ثبت بازدید');
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'خطا در ثبت بازدید');
+                }
             } catch (error) {
                 console.error('Error recording visit:', error);
             }

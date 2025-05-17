@@ -22,13 +22,16 @@ def init_db():
     
     # ایجاد جدول حضور
     c.execute('''
-        CREATE TABLE IF NOT EXISTS attendance (
+        CREATE TABLE IF NOT EXISTS guests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
             name TEXT,
-            phone TEXT,
-            num_guests INTEGER DEFAULT 1,
-            status TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            num INTEGER DEFAULT 1,
+            tell TEXT,
+            attendance_status TEXT DEFAULT 'pending',
+            user_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
     
@@ -39,7 +42,9 @@ def init_db():
             code TEXT NOT NULL,
             visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             visit_type TEXT,
-            FOREIGN KEY (code) REFERENCES guests(code)
+            user_id INTEGER,
+            FOREIGN KEY (code) REFERENCES guests(code),
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
     
@@ -126,23 +131,27 @@ def login():
 
 @app.route('/api/statistics', methods=['GET'])
 def get_statistics():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
+
     conn = get_db_connection()
     
     # تعداد کل مهمان‌ها
-    total_guests = conn.execute('SELECT COUNT(*) as count FROM guests').fetchone()['count']
+    total_guests = conn.execute('SELECT COUNT(*) as count FROM guests WHERE user_id = ?', (user_id,)).fetchone()['count']
     
     # تعداد کل افراد
-    total_people = conn.execute('SELECT SUM(num) as total FROM guests').fetchone()['total'] or 0
+    total_people = conn.execute('SELECT SUM(num) as total FROM guests WHERE user_id = ?', (user_id,)).fetchone()['total'] or 0
     
     # تعداد کل افرادی که می‌آیند
     total_attending = conn.execute('''
         SELECT SUM(num) as total 
         FROM guests 
-        WHERE attendance_status = 'attending'
-    ''').fetchone()['total'] or 0
+        WHERE attendance_status = 'attending' AND user_id = ?
+    ''', (user_id,)).fetchone()['total'] or 0
     
     # تعداد کل بازدیدها
-    total_visits = conn.execute('SELECT COUNT(*) as count FROM visits').fetchone()['count']
+    total_visits = conn.execute('SELECT COUNT(*) as count FROM visits WHERE user_id = ?', (user_id,)).fetchone()['count']
     
     conn.close()
     
@@ -155,8 +164,12 @@ def get_statistics():
 
 @app.route('/api/attendance', methods=['GET'])
 def get_attendance():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
+
     conn = get_db_connection()
-    guests = conn.execute('SELECT * FROM guests ORDER BY id').fetchall()
+    guests = conn.execute('SELECT * FROM guests WHERE user_id = ? ORDER BY id', (user_id,)).fetchall()
     conn.close()
     
     return jsonify([dict(guest) for guest in guests])
@@ -164,6 +177,10 @@ def get_attendance():
 @app.route('/api/visits', methods=['GET'])
 def get_visits():
     try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'user_id is required'}), 400
+
         conn = get_db_connection()
         visits = conn.execute('''
             SELECT v.id, v.code, v.visit_time, 
@@ -171,8 +188,9 @@ def get_visits():
                    g.name as guest_name
             FROM visits v
             INNER JOIN guests g ON v.code = g.code
+            WHERE v.user_id = ?
             ORDER BY v.visit_time DESC
-        ''').fetchall()
+        ''', (user_id,)).fetchall()
         conn.close()
         
         return jsonify({
@@ -292,25 +310,32 @@ def change_opinion(code):
 
 @app.route('/api/record-visit', methods=['POST'])
 def record_visit():
-    try:
-        code = request.args.get('code')
-        if not code:
-            return jsonify({'success': False, 'error': 'کد مهمان الزامی است'}), 400
-
-        conn = get_db_connection()
-        c = conn.cursor()
-        
-        c.execute('''
-            INSERT INTO visits (code, visit_time, visit_type)
-            VALUES (?, ?, ?)
-        ''', (code, datetime.now(), 'بازدید'))
-        
-        conn.commit()
+    data = request.get_json()
+    code = data.get('code')
+    visit_type = data.get('visit_type', 'بازدید')
+    user_id = data.get('user_id')
+    
+    if not code or not user_id:
+        return jsonify({'success': False, 'message': 'کد و شناسه کاربر الزامی است'})
+    
+    conn = get_db_connection()
+    
+    # چک کردن وجود مهمان
+    guest = conn.execute('SELECT code FROM guests WHERE code = ? AND user_id = ?', (code, user_id)).fetchone()
+    if not guest:
         conn.close()
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'message': 'مهمان یافت نشد'})
+    
+    # ثبت بازدید
+    conn.execute('''
+        INSERT INTO visits (code, visit_type, user_id)
+        VALUES (?, ?, ?)
+    ''', (code, visit_type, user_id))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'بازدید با موفقیت ثبت شد'})
 
 @app.route('/api/attendance', methods=['POST'])
 def record_attendance():
@@ -380,77 +405,41 @@ def get_stats():
 
 @app.route('/api/import-csv', methods=['POST'])
 def import_csv():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'فایل یافت نشد'})
+    
+    user_id = request.form.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'شناسه کاربر الزامی است'})
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'فایلی انتخاب نشده است'})
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({'success': False, 'message': 'فقط فایل CSV پشتیبانی می‌شود'})
+    
     try:
-        if 'file' not in request.files:
-            return jsonify({
-                'success': False,
-                'message': 'فایل CSV انتخاب نشده است'
-            })
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({
-                'success': False,
-                'message': 'فایل CSV انتخاب نشده است'
-            })
-        
-        if not file.filename.endswith('.csv'):
-            return jsonify({
-                'success': False,
-                'message': 'لطفا فقط فایل CSV آپلود کنید'
-            })
-        
-        # Read the CSV file
-        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
-        csv_reader = csv.DictReader(stream)
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_data = csv.DictReader(stream)
         
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get the column names from the CSV file
-        fieldnames = csv_reader.fieldnames
-        if not fieldnames:
-            return jsonify({
-                'success': False,
-                'message': 'فایل CSV خالی است'
-            })
-        
-        # Required fields
-        required_fields = ['ID', 'NAME', 'NUM', 'TELL', 'CODE']
-        missing_fields = [field for field in required_fields if field not in fieldnames]
-        if missing_fields:
-            return jsonify({
-                'success': False,
-                'message': f'فیلدهای الزامی در فایل CSV وجود ندارند: {", ".join(missing_fields)}'
-            })
-        
-        # Process each row
-        success_count = 0
-        error_count = 0
-        
-        for row in csv_reader:
+        for row in csv_data:
             try:
-                # Clean and validate the data
-                name = row['NAME'].strip()
-                phone = row['TELL'].strip()
-                num_guests = int(row['NUM'])
-                code = row['CODE'].strip()
-                
-                if not name or not phone or not code:
-                    error_count += 1
-                    continue
-                
-                # Insert into database
                 cursor.execute('''
-                    INSERT INTO guests (code, name, num, tell, attendance_status)
+                    INSERT INTO guests (code, name, num, tell, user_id)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (code, name, num_guests, phone, 'pending'))
-                
-                success_count += 1
-                
-            except Exception as e:
-                error_count += 1
-                print(f"Error processing row: {e}")
+                ''', (
+                    row.get('CODE', ''),
+                    row.get('NAME', ''),
+                    int(row.get('NUM', 1)),
+                    row.get('TELL', ''),
+                    user_id
+                ))
+            except sqlite3.IntegrityError:
+                # اگر کد تکراری باشد، آن را نادیده می‌گیریم
                 continue
         
         conn.commit()
@@ -458,13 +447,12 @@ def import_csv():
         
         return jsonify({
             'success': True,
-            'message': f'تعداد {success_count} مهمان با موفقیت وارد شد. تعداد {error_count} خطا در وارد کردن.'
+            'message': 'اطلاعات با موفقیت وارد شد'
         })
-        
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'خطا در پردازش فایل: {str(e)}'
+            'message': f'خطا در وارد کردن اطلاعات: {str(e)}'
         }), 500
 
 if __name__ == '__main__':
