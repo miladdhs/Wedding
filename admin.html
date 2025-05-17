@@ -290,6 +290,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
+            overflow-y: auto;
         }
 
         .modal-content {
@@ -301,6 +302,12 @@
             max-width: 800px;
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        body.modal-open {
+            overflow: hidden;
         }
 
         .close-modal {
@@ -366,6 +373,155 @@
                 padding: 0.8rem;
                 font-size: 0.9rem;
             }
+        }
+
+        .csv-import-container {
+            padding: 1rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: #2980b9;
+            background: #e3f2fd;
+        }
+
+        .file-upload-area i {
+            color: #3498db;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-area p {
+            color: #666;
+            margin: 0.5rem 0;
+        }
+
+        .file-upload-btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .file-upload-btn:hover {
+            background: #2980b9;
+        }
+
+        .file-info {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-details i {
+            color: #3498db;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-right: auto;
+        }
+
+        .csv-format-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .csv-format-info h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .format-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .format-table th, .format-table td {
+            padding: 0.8rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        .format-table th {
+            background: #e3f2fd;
+            color: #2c3e50;
+        }
+
+        .import-actions {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .import-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .import-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .import-btn:not(:disabled):hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .import-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .import-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .import-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .import-status.loading {
+            background: #fff3cd;
+            color: #856404;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -565,12 +721,66 @@
         <div id="csvImportModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>وارد کردن فایل CSV</h2>
-                <form id="csvImportForm">
-                    <input type="file" id="csvFile" accept=".csv" required>
-                    <button type="submit" class="submit-btn">وارد کردن</button>
-                </form>
-                <div id="importStatus" style="margin-top: 1rem;"></div>
+                <h2 class="modal-title">وارد کردن فایل CSV</h2>
+                <div class="csv-import-container">
+                    <div class="file-upload-area" id="dropZone">
+                        <i class="fas fa-file-csv fa-3x"></i>
+                        <p>فایل CSV خود را اینجا رها کنید</p>
+                        <p>یا</p>
+                        <label for="csvFile" class="file-upload-btn">
+                            <i class="fas fa-upload"></i>
+                            انتخاب فایل
+                        </label>
+                        <input type="file" id="csvFile" accept=".csv" hidden>
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <i class="fas fa-file-alt"></i>
+                            <span id="fileName"></span>
+                            <button class="remove-file" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="csv-format-info">
+                        <h3>فرمت مورد نیاز فایل CSV:</h3>
+                        <div class="format-table">
+                            <table>
+                                <tr>
+                                    <th>نام ستون</th>
+                                    <th>توضیحات</th>
+                                </tr>
+                                <tr>
+                                    <td>ID</td>
+                                    <td>شناسه یکتا</td>
+                                </tr>
+                                <tr>
+                                    <td>NAME</td>
+                                    <td>نام مهمان</td>
+                                </tr>
+                                <tr>
+                                    <td>NUM</td>
+                                    <td>تعداد نفرات</td>
+                                </tr>
+                                <tr>
+                                    <td>TELL</td>
+                                    <td>شماره تماس</td>
+                                </tr>
+                                <tr>
+                                    <td>CODE</td>
+                                    <td>کد یکتا</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="import-actions">
+                        <button type="button" class="import-btn" id="importBtn" disabled>
+                            <i class="fas fa-file-import"></i>
+                            وارد کردن
+                        </button>
+                    </div>
+                    <div id="importStatus" class="import-status"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -976,59 +1186,133 @@
         }, 30000);
 
         // CSV Import functionality
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('csvFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const importBtn = document.getElementById('importBtn');
+        const importStatus = document.getElementById('importStatus');
+        const csvImportModal = document.getElementById('csvImportModal');
+        const closeBtn = document.querySelector('.close');
+
+        // Modal open/close functionality
         document.getElementById('importCsvBtn').addEventListener('click', function() {
-            document.getElementById('csvImportModal').style.display = 'block';
+            csvImportModal.style.display = 'block';
+            document.body.classList.add('modal-open');
         });
 
-        document.querySelector('.close').addEventListener('click', function() {
-            document.getElementById('csvImportModal').style.display = 'none';
-        });
-
-        document.getElementById('csvImportForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const fileInput = document.getElementById('csvFile');
-            const file = fileInput.files[0];
-            const statusDiv = document.getElementById('importStatus');
-            
-            if (!file) {
-                statusDiv.innerHTML = '<p style="color: red;">لطفا یک فایل CSV انتخاب کنید</p>';
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            try {
-                statusDiv.innerHTML = '<p>در حال وارد کردن اطلاعات...</p>';
-                
-                const response = await fetch('/api/import-csv', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    statusDiv.innerHTML = `<p style="color: green;">${result.message}</p>`;
-                    // Refresh the guests table
-                    loadData();
-                } else {
-                    statusDiv.innerHTML = `<p style="color: red;">${result.message}</p>`;
-                }
-            } catch (error) {
-                statusDiv.innerHTML = '<p style="color: red;">خطا در وارد کردن فایل</p>';
-                console.error('Error:', error);
-            }
+        closeBtn.addEventListener('click', function() {
+            csvImportModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            removeFile(); // Reset the form when closing
         });
 
         // Close modal when clicking outside
         window.addEventListener('click', function(event) {
-            const modal = document.getElementById('csvImportModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
+            if (event.target === csvImportModal) {
+                csvImportModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                removeFile(); // Reset the form when closing
             }
         });
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('highlight');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('highlight');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                    fileName.textContent = file.name;
+                    fileInfo.style.display = 'block';
+                    importBtn.disabled = false;
+                } else {
+                    showStatus('لطفا فقط فایل CSV آپلود کنید', 'error');
+                }
+            }
+        }
+
+        function removeFile() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            importBtn.disabled = true;
+            importStatus.innerHTML = '';
+        }
+
+        importBtn.addEventListener('click', async function() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showStatus('در حال وارد کردن اطلاعات...', 'loading');
+                importBtn.disabled = true;
+
+                const response = await fetch('/api/import-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus(result.message, 'success');
+                    setTimeout(() => {
+                        document.getElementById('csvImportModal').style.display = 'none';
+                        loadData();
+                    }, 2000);
+                } else {
+                    showStatus(result.message, 'error');
+                    importBtn.disabled = false;
+                }
+            } catch (error) {
+                showStatus('خطا در وارد کردن فایل', 'error');
+                importBtn.disabled = false;
+                console.error('Error:', error);
+            }
+        });
+
+        function showStatus(message, type) {
+            importStatus.innerHTML = message;
+            importStatus.className = 'import-status ' + type;
+        }
     </script>
 </body>
 </html> 
